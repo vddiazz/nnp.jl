@@ -12,4 +12,4 @@ git remote set-url origin git@github.com:vddiazz/nnp.jl.git
 
 git add .
 git commit -m "$1"
-git push
+git push --force
