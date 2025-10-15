@@ -6,10 +6,10 @@ using NPZ
 using Plots
 using SpecialFunctions
 
-include("sampling.jl") # PENDING: USE PRE-GENERATED DATA WITH PYTHON
-export make_r
-export make_Q
-export make_grid
+#include("sampling.jl") # PENDING: USE PRE-GENERATED DATA WITH PYTHON
+#export make_r
+#export make_Q
+#export make_grid
 
 include("prod.jl")
 export field_value
