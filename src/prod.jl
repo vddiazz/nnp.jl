@@ -1,0 +1,150 @@
+#----- pkg
+
+using JLD2
+using NPZ
+using LinearAlgebra
+using SpecialFunctions
+
+#----- field
+
+function field_value(coord::Vector{Int64}, r_idx::Int, Q1::Matrix{Float64}, Q2::Matrix{Float64})
+
+    #----- matrices
+
+    I = [1. 0.;
+         0. 1.]
+    sigma = [[0im 1.; 1. 0im],
+             [0. -1im; 1im 0.],
+             [1. 0im; 0im -1.]]
+
+    #----- params
+
+    y1 = grid[1]; y2 = grid[2]; y3 = grid[3]
+    y = [y1[coord[1]], y2[coord[2]], y3[coord[3]]]
+    xm = [0., 0., r_vals[r_idx]/2.]
+    pos_p = y.+xm; pos_m = y.-xm
+
+    ar_p = norm(pos_p, 2)
+    ar_m = norm(pos_m, 2)
+
+    #----- f(r) values
+
+    f_p = f_plus[r_idx][coord[1], coord[2], coord[3]]
+    f_m = f_minus[r_idx][coord[1], coord[2], coord[3]]
+
+    #----- U1
+
+    dirs1 = [(Q1*s)*inv(Q1) for s in sigma]
+    Z1 = pos_m[1]*dirs1[1] + pos_m[2]*dirs1[2] + pos_m[3]*dirs1[3]
+    dirs1_param = [0.5*trace(Z1), 0.5*trace(sigma[1]*Z1), 0.5*trace(sigma[2]*Z1), 0.5*trace(sigma[3]*Z1)]
+    phi1 = [cos(f_m)+dirs1_param[1], sin(f_m)*(1./ar_m)*dirs1_param[2], sin(f_m)*(1./ar_m)*dirs1_param[3], sin(f_m)*(1./ar_m)*dirs1_param[4]]
+
+    #----- U2
+
+    dirs2 = [(Q2*s)*inv(Q2) for s in sigma]
+    Z2 = pos_p[1]*dirs2[1] + pos_p[2]*dirs2[2] + pos_p[3]*dirs2[3]
+    dirs2_param = [0.5*trace(Z2), 0.5*trace(sigma[1]*Z2), 0.5*trace(sigma[2]*Z2), 0.5*trace(sigma[3]*Z2)]
+    phi2 = [cos(f_p)+dirs2_param[1], sin(f_p)*(1./ar_p)*dirs2_param[2], sin(f_p)*(1./ar_p)*dirs2_param[3], sin(f_p)*(1./ar_p)*dirs2_param[4]]
+
+    #----- symmetrized product field
+
+    U = [ phi1[1]*phi2[1] - phi1[2]*phi2[2] - phi1[3]*phi2[3] - phi1[4]*phi2[4],
+          phi1[1]*phi2[2] + phi1[2]*phi2[1],
+          phi1[1]*phi2[3] + phi1[3]*phi2[1],
+          phi1[1]*phi2[4] + phi1[4]*phi2[1]]
+
+    #----- normalization
+
+    C0 = (U[1])^2; Ck = U[2]^2 + U[3]^2 + U[4]^2
+    N = sqrt(C0 + Ck)
+
+    #----- field
+    
+    return (1./N) .* U
+end
+
+###
+
+function field_grid(grid::Vector{Vector{Float64}}, r_idx::Int, Q1::Matrix{Float64}, Q2::Matrix{Float64}, model::String)
+
+    #----- prepare grid and params
+
+    y1 = grid[1]; y2 = grid[2]; y3 = grid[3]
+
+    idx_list = Float64[]
+    for i in 1:length(y1)
+        for j in 1:length(y2)
+            for k in 1:length(y3)
+                push!(idx_list, [i,j,k])
+            end
+        end
+    end
+
+    f_plus = npzread("/home/velni/phd/w/nnp/data/interp/$(model)/f_$(model)_plus.npy")
+    f_minus = npzread("/home/velni/phd/w/nnp/data/interp/$(model)/f_$(model)_minus.npy")
+
+    #----- evaluate field values
+    
+    U_vals = zeros[Float64, length(y1),length(y2),length(y3),4]
+
+    for (step,idx) in enumerate(idx_list)
+        U_vals[idx[1]][idx[2]][idx[3]] .= field_value(idx, r_idx, Q1, Q2) 
+        print("\rdone: $(round(step/length(idx_list)*100,digits=4)) %")
+    end
+
+    return U_vals
+end
+
+###
+
+function make_field(grid::Vector{Vector{Float64}}, r_vals::Vector{Float64}, Q_vals::Vector{Matrix{Float64}}, model::String, out::String, output_format::String)
+
+    if (output_format != "jld2") && (output_format != "npy")
+        println("invalid output data type")
+        return
+    end
+
+    #----- params
+
+    point_list = Float64[]
+    for i in 1:length(r_vals)
+        for j in 1:length(Q_vals)
+            push!(point_list, [i,j])
+        end
+    end
+ 
+    println()
+    println("#--------------------------------------------------#")
+    println()
+    println("2-skyrmion field")
+    println()
+
+    #----- main loop
+
+    for (idx,point) in enumerate(point_list)
+        
+        r_idx = point[1]
+        Q_idx = point[2]
+
+        field_grid(grid, r_idx, I, Q_vals[Q_idx], model)
+        println()
+        println("\rdone: r=$(r_idx), Q=$(Q_idx)")
+        println()
+
+    #----- data saving
+
+        if output_format == "jld2"
+            path = out*"/U_sym_r=$(r_idx)_Q=$(Q_idx).jld2"
+            @save path U_vals
+
+        elseif output_format == "npy"
+            npzwrite(out*"/U_sym_r=$(r_idx)_Q=$(Q_idx).npy", U_vals)
+        end
+    end
+
+    println()
+    println("data saved at "*out )
+    println()
+    println("#--------------------------------------------------#")
+
+end
