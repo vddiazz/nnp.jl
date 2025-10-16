@@ -35,7 +35,7 @@ function make_r(out::String,output_format::String)
 end
 
 #----- Q values
-
+#=
 function make_Q(out::String,output_format::String)
 
     if (output_format != "jld2") && (output_format != "npy")
@@ -63,5 +63,47 @@ function make_Q(out::String,output_format::String)
                 push!(pr_1, ell .* [1,u,v,w])
                 push!(uvw_comb, [1,u,v,w])
                 push!(uvw_str, ["1","u","v","w"])
+=#
+##### y sampling
 
+function make_grid(type_of_grid::String, l1::Int64,l2::Int64,l3::Int64,step::Float64, out::String,output_format::String)
 
+    yt1 = collect(-l1/2:step:l1/2)
+    yt2 = collect(-l2/2:step:l2/2)
+    yt3 = collect(-l3/2:step:l3/2)
+
+    #----- main
+    
+    println()
+    println("#--------------------------------------------------#")
+    println()
+    println("Grid generation")
+    println()
+
+    if type_of_grid == "reg"
+        y1 = yt1
+        y2 = yt2
+        y3 = yt3
+
+        print("done: reg")
+    #elseif
+    end
+
+    #----- data saving
+
+    if output_format == "jld2"
+        path = out*"/$(type_of_grid)_$(l1)x$(l2)x$(l3)/grid.jld2"
+        @save path y1,y2,y3
+
+    elseif output_format == "npy"
+        npzwrite(out*"/$(type_of_grid)_$(l1)x$(l2)x$(l3)/y1.npy", y1)
+        npzwrite(out*"/$(type_of_grid)_$(l1)x$(l2)x$(l3)/y2.npy", y2)
+        npzwrite(out*"/$(type_of_grid)_$(l1)x$(l2)x$(l3)/y3.npy", y3)
+
+    end
+
+    println()
+    println("data saved at "*out )
+    println()
+    println("#--------------------------------------------------#")
+end
