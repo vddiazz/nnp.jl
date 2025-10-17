@@ -9,6 +9,7 @@ using SpecialFunctions
 
 using DelimitedFiles
 using Interpolations
+using Base.Threads
 
 function interp_2sky_no(rtc,r_vals, model::String, out::String,output_format::String)
 
@@ -38,7 +39,8 @@ function interp_2sky_no(rtc,r_vals, model::String, out::String,output_format::St
     println("Radial function interpolation")
      
     f_plus = Array{Float64,3}[]; f_minus = Array{Float64,3}[]
-    for (r_idx,r) in enumerate(r_vals)
+    for (r_idx,r) in enumerate(r_vals) ### Threads.@threads cannot be used on iterators
+    #for r in r_vals
         matrix_f_plus = zeros(Float64, l1,l2,l3); matrix_f_minus = zeros(Float64, l1,l2,l3)
 
         println()
@@ -46,6 +48,7 @@ function interp_2sky_no(rtc,r_vals, model::String, out::String,output_format::St
         println()
         
         for (f_idx,idx) in enumerate(idx_list)
+        #@threads for idx in idx_list
             temp_f_plus = itp(norm([y1[idx[1]],y2[idx[2]],y3[idx[3]]] .+ [0.,0.,r/2]) ) 
             temp_f_minus = itp(norm([y1[idx[1]],y2[idx[2]],y3[idx[3]]] .- [0.,0.,r/2]) )
             

@@ -24,8 +24,8 @@ function field_value(y1,y2,y3,r_vals,f_plus,f_minus, coord::Vector{Int64}, r_idx
 
     #----- f(r) values
 
-    f_p = f_plus[r_idx, coord[1],coord[2],coord[3]]
-    f_m = f_minus[r_idx, coord[1],coord[2],coord[3]]
+    f_p = f_plus[coord[1],coord[2],coord[3]][1]
+    f_m = f_minus[coord[1],coord[2],coord[3]][1]
 
     #----- U1
 
@@ -60,11 +60,13 @@ end
 
 ###
 
-function field_grid(r_vals, rtc, r_idx::Int, Q1::Matrix{ComplexF64}, Q2::Matrix{ComplexF64}, model::String)
+function field_grid(r_vals, grid_size, r_idx::Int, Q1::Matrix{ComplexF64}, Q2::Matrix{ComplexF64}, model::String)
 
     #----- prepare rtc and params
 
-    y1 = rtc[1]; y2 = rtc[2]; y3 = rtc[3]
+    y1 = npzread("/home/velni/phd/w/nnp/data/sample/$(grid_size)/y1.npy")
+    y2 = npzread("/home/velni/phd/w/nnp/data/sample/$(grid_size)/y2.npy")
+    y3 = npzread("/home/velni/phd/w/nnp/data/sample/$(grid_size)/y3.npy")
 
     idx_list = []
     for i in 1:length(y1)
@@ -75,8 +77,8 @@ function field_grid(r_vals, rtc, r_idx::Int, Q1::Matrix{ComplexF64}, Q2::Matrix{
         end
     end
 
-    f_plus = npzread("/home/velni/phd/w/nnp/data/interp/$(model)/f_$(model)_plus.npy")
-    f_minus = npzread("/home/velni/phd/w/nnp/data/interp/$(model)/f_$(model)_minus.npy")
+    f_plus = npzread("/home/velni/phd/w/nnp/data/interp/$(model)/$(grid_size)/f_$(model)_plus.npy")
+    f_minus = npzread("/home/velni/phd/w/nnp/data/interp/$(model)/$(grid_size)/f_$(model)_minus_r=61.npy")
 
     #----- evaluate field values
     
@@ -92,7 +94,7 @@ end
 
 ###
 
-function make_field(rtc, r_vals, Q_vals, model::String, out::String, output_format::String)
+function make_field(grid_size, r_vals, Q_vals, model::String, out::String, output_format::String)
 
     if (output_format != "jld2") && (output_format != "npy")
         println("invalid output data type")
