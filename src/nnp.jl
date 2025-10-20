@@ -5,6 +5,8 @@ using LinearAlgebra
 using NPZ
 using Plots
 using SpecialFunctions
+using BenchmarkTools
+using LoopVectorization
 
 include("sample.jl")
 export make_r
@@ -17,6 +19,11 @@ export interp_2sky_no
 include("prod.jl")
 export field_value
 export field_grid
+export field_grid_single
+export FAST_field_grid_single
 export make_field
+
+include("deriv.jl")
+export deriv_y
 
 end

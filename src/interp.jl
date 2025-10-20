@@ -9,24 +9,13 @@ using SpecialFunctions
 
 using DelimitedFiles
 using Interpolations
-using Base.Threads
 
-function interp_2sky_no(rtc,r_vals, model::String, out::String,output_format::String)
+function interp_2sky_no(rtc,r_vals, model::String,data, out::String,output_format::String)
 
-    data = readdlm("/home/velni/phd/w/nnp/data/profile_f/profile_f_$(model).txt")
     r0 = data[:,1]; f0 = data[:,2]
 
     y1 = rtc[1]; y2 = rtc[2]; y3 = rtc[3]
     l1 = length(y1); l2 = length(y2); l3 = length(y3)
-
-    idx_list = []
-    for i in 1:l1
-        for j in 1:l2
-            for k in 1:l3
-                push!(idx_list, [i,j,k])
-            end
-        end
-    end
 
     #----- main loop
     
@@ -39,23 +28,29 @@ function interp_2sky_no(rtc,r_vals, model::String, out::String,output_format::St
     println("Radial function interpolation")
      
     f_plus = Array{Float64,3}[]; f_minus = Array{Float64,3}[]
-    for (r_idx,r) in enumerate(r_vals) ### Threads.@threads cannot be used on iterators
-    #for r in r_vals
+    for (r_idx,r) in enumerate(r_vals)
+        
         matrix_f_plus = zeros(Float64, l1,l2,l3); matrix_f_minus = zeros(Float64, l1,l2,l3)
 
         println()
         print("computing: r=$(r_idx)")
         println()
         
-        for (f_idx,idx) in enumerate(idx_list)
-        #@threads for idx in idx_list
-            temp_f_plus = itp(norm([y1[idx[1]],y2[idx[2]],y3[idx[3]]] .+ [0.,0.,r/2]) ) 
-            temp_f_minus = itp(norm([y1[idx[1]],y2[idx[2]],y3[idx[3]]] .- [0.,0.,r/2]) )
+        f_idx = 0
+        for k in 1:length(y3)
+            for j in 1:length(y2)
+                for i in 1:length(y1)
+                    temp_f_plus = itp(norm([y1[i],y2[j],y3[k]] .+ [0.,0.,r/2]) ) 
+                    temp_f_minus = itp(norm([y1[i],y2[j],y3[k]] .- [0.,0.,r/2]) )
             
-            matrix_f_plus[idx[1],idx[2],idx[3]] = temp_f_plus
-            matrix_f_minus[idx[1],idx[2],idx[3]] = temp_f_minus
+                    matrix_f_plus[i,j,k] = temp_f_minus # idk but it works
+                    matrix_f_minus[i,j,k] = temp_f_plus # idk but it works
             
-            print("\rdone: $(round(f_idx/length(idx_list)*100,digits=4)) %")
+                    f_idx = f_idx+1
+                    print("\rdone: $(round(f_idx/(length(y1)*length(y2)*length(y3))*100,digits=4)) %")
+       
+                end
+            end
         end
 
         println()

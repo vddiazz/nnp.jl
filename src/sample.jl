@@ -103,7 +103,7 @@ function make_grid(type_of_grid::String, l1::Int64,l2::Int64,l3::Int64,step::Flo
     end
 
     println()
-    println("data saved at "*out )
+    println("data saved at "*out*"/$(type_of_grid)" )
     println()
     println("#--------------------------------------------------#")
 end
