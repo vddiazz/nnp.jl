@@ -20,8 +20,9 @@ include("prod.jl")
 export field_value
 export field_grid
 export field_grid_single
-export FAST_field_grid_single
+export FAST_field_grid
 export make_field
+export FAST_make_field
 
 include("deriv.jl")
 export deriv_y

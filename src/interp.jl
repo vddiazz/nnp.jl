@@ -4,13 +4,14 @@ using JLD2
 using NPZ
 using LinearAlgebra
 using SpecialFunctions
+using ProgressMeter
 
 #----- interp
 
 using DelimitedFiles
 using Interpolations
 
-function interp_2sky_no(rtc,r_vals, model::String,data, out::String,output_format::String)
+function interp_2sky_no(rtc,r_vals::Array{Float64}, model::String,data, out::String,output_format::String)
 
     r0 = data[:,1]; f0 = data[:,2]
 
@@ -28,48 +29,39 @@ function interp_2sky_no(rtc,r_vals, model::String,data, out::String,output_forma
     println("Radial function interpolation")
      
     f_plus = Array{Float64,3}[]; f_minus = Array{Float64,3}[]
-    for (r_idx,r) in enumerate(r_vals)
+    for r_idx in 1:length(r_vals)
         
         matrix_f_plus = zeros(Float64, l1,l2,l3); matrix_f_minus = zeros(Float64, l1,l2,l3)
 
         println()
-        print("computing: r=$(r_idx)")
-        println()
+
+        r = r_vals[r_idx]
         
-        f_idx = 0
-        for k in 1:length(y3)
-            for j in 1:length(y2)
+        @showprogress 1 "Computing r=$(r_idx):" for k in 1:length(y3)
+            @inbounds @fastmath for j in 1:length(y2)
                 for i in 1:length(y1)
                     temp_f_plus = itp(norm([y1[i],y2[j],y3[k]] .+ [0.,0.,r/2]) ) 
                     temp_f_minus = itp(norm([y1[i],y2[j],y3[k]] .- [0.,0.,r/2]) )
             
                     matrix_f_plus[i,j,k] = temp_f_minus # idk but it works
                     matrix_f_minus[i,j,k] = temp_f_plus # idk but it works
-            
-                    f_idx = f_idx+1
-                    print("\rdone: $(round(f_idx/(length(y1)*length(y2)*length(y3))*100,digits=4)) %")
-       
                 end
             end
+        end 
+
+        #----- data saving
+
+        if output_format == "jld2"
+            path1 = out*"/f_$(model)_plus_r=$(r_idx).jld2"; path2 = out*"/f_$(model)_minus_r=$(r_idx).jld2"
+            @save path1 matrix_f_plus; @save path2 matrix_f_minus
+        elseif output_format == "npy"
+            push!(f_plus, matrix_f_plus)
+            push!(f_minus, matrix_f_minus)
+            npzwrite(out*"/f_$(model)_plus_r=$(r_idx).npy", cat(f_plus...;dims=4)); npzwrite(out*"/f_$(model)_minus_r=$(r_idx).npy", cat(f_minus...;dims=4))
         end
 
-        println()
+    end
         
-        push!(f_plus, matrix_f_plus)
-        push!(f_minus, matrix_f_minus)
-    end
-
-    #----- data saving
-
-    if output_format == "jld2"
-        path1 = out*"/f_$(model)_plus.jld2"; path2 = out*"/f_$(model)_minus.jld2"
-        @save path1 f_plus; @save path2 f_minus
-
-    elseif output_format == "npy"
-        npzwrite(out*"/f_$(model)_plus.npy", cat(f_plus...;dims=4)); npzwrite(out*"/f_$(model)_minus.npy", cat(f_minus...;dims=4))
-    
-    end
-    
     println()
     println("data saved at "*out )
     println()
@@ -121,7 +113,7 @@ function interp_2sky_dx(rtc,r_vals, model::String,deriv::String,hD::Float64, out
         print("computing: r=$(r_idx)")
         println()
         
-        for (f_idx,idx) in enumerate(idx_list)
+        @showprogress 1 "Computing..." for idx in idx_list
             temp_f_plus_p = itp(norm([y1[idx[1]],y2[idx[2]],y3[idx[3]]] .+ x_p) ) 
             temp_f_plus_m = itp(norm([y1[idx[1]],y2[idx[2]],y3[idx[3]]] .+ x_m) )
             temp_f_minus_p = itp(norm([y1[idx[1]],y2[idx[2]],y3[idx[3]]] .- x_p) )
@@ -131,8 +123,6 @@ function interp_2sky_dx(rtc,r_vals, model::String,deriv::String,hD::Float64, out
             matrix_f_plus_m[idx[1],idx[2],idx[3]] = temp_f_plus_m
             matrix_f_minus_p[idx[1],idx[2],idx[3]] = temp_f_minus_p
             matrix_f_minus_m[idx[1],idx[2],idx[3]] = temp_f_minus_m
-
-            print("\rdone: $(round(f_idx/length(idx_list)*100,digits=4)) %")
         end
         
         println()
