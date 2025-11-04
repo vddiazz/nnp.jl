@@ -43,8 +43,8 @@ function interp_2sky_no(rtc,r_vals::Array{Float64}, model::String,data, out::Str
                     temp_f_plus = itp(norm([y1[i],y2[j],y3[k]] .+ [0.,0.,r/2]) ) 
                     temp_f_minus = itp(norm([y1[i],y2[j],y3[k]] .- [0.,0.,r/2]) )
             
-                    matrix_f_plus[i,j,k] = temp_f_minus # idk but it works
-                    matrix_f_minus[i,j,k] = temp_f_plus # idk but it works
+                    matrix_f_plus[i,j,k] = temp_f_plus
+                    matrix_f_minus[i,j,k] = temp_f_minus
                 end
             end
         end 
@@ -55,9 +55,7 @@ function interp_2sky_no(rtc,r_vals::Array{Float64}, model::String,data, out::Str
             path1 = out*"/f_$(model)_plus_r=$(r_idx).jld2"; path2 = out*"/f_$(model)_minus_r=$(r_idx).jld2"
             @save path1 matrix_f_plus; @save path2 matrix_f_minus
         elseif output_format == "npy"
-            push!(f_plus, matrix_f_plus)
-            push!(f_minus, matrix_f_minus)
-            npzwrite(out*"/f_$(model)_plus_r=$(r_idx).npy", cat(f_plus...;dims=4)); npzwrite(out*"/f_$(model)_minus_r=$(r_idx).npy", cat(f_minus...;dims=4))
+            npzwrite(out*"/f_$(model)_plus_r=$(r_idx).npy", matrix_f_plus); npzwrite(out*"/f_$(model)_minus_r=$(r_idx).npy", matrix_f_minus)
         end
 
     end

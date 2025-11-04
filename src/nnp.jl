@@ -27,4 +27,7 @@ export FAST_make_field
 include("deriv.jl")
 export deriv_y
 
+include("misc.jl")
+export b_dens
+
 end

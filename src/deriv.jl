@@ -17,7 +17,7 @@ function deriv_y(dir::String,grid_size::String,hD::Float64,r_idx::Int,Q_idx::Int
     
     #----- params
 
-    field = npzread("/home/velni/phd/w/nnp/data/prod/$(model)/$(grid_size)/U_sym_r=$(r_idx)_Q=$(Q_idx).npy")
+    field = npzread("/home/velni/phd/w/nnp/data/prod/$(model)/$(grid_size)/U_sym_r=$(r_idx)_Q=$(Q_idx).npy") # KICK OUTSIDE OF FUNCTION
     @assert eltype(field) == Float64
     field :: Array{Float64}
 

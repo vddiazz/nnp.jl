@@ -194,6 +194,10 @@ function FAST_field_grid(grid_size::String,y1::Array{Float64},y2::Array{Float64}
     
     U_vals = zeros(Float64, length(y1),length(y2),length(y3),4)
 
+    println()
+    println("2-skyrmion field -- Symmetrized product approximation")
+    println()
+
     @showprogress 1 "Computing..." for k in 1:length(y3)
         @inbounds @fastmath for j in 1:length(y2), i in 1:length(y1)
                
@@ -209,13 +213,13 @@ function FAST_field_grid(grid_size::String,y1::Array{Float64},y2::Array{Float64}
 
             #----- f(r) values
 
-            f_p = f_plus[i,j,k,1]
-            f_m = f_minus[i,j,k,1]
+            f_p = f_plus[i,j,k]
+            f_m = f_minus[i,j,k]
 
-            cos_f_p = 1 - 0.5*f_p^2 + (1/24.)*f_p^4 - (1/720.)*f_p^6
-            cos_f_m = 1 - 0.5*f_m^2 + (1/24.)*f_m^4 - (1/720.)*f_m^6
-            sin_f_p = f_p - (1/6.)*f_p^3 + (1/120.)*f_p^5 - (1/5040.)*f_p^7
-            sin_f_m = f_m - (1/6.)*f_m^3 + (1/120.)*f_m^5 - (1/5040.)*f_m^7
+            cos_f_p = 1 - 0.5*f_p^2 + (1/24.)*f_p^4 - (1/720.)*f_p^6 + (1/40320.)*f_p^8 - (1/3638800.)*f_p^10
+            cos_f_m = 1 - 0.5*f_m^2 + (1/24.)*f_m^4 - (1/720.)*f_m^6 + (1/40320.)*f_m^8 - (1/3638800.)*f_m^10
+            sin_f_p = f_p - (1/6.)*f_p^3 + (1/120.)*f_p^5 - (1/5040.)*f_p^7 + (1/362880.)*f_p^9 - (1/39916800.)*f_p^11
+            sin_f_m = f_m - (1/6.)*f_m^3 + (1/120.)*f_m^5 - (1/5040.)*f_m^7 + (1/362880.)*f_m^9 - (1/39916800.)*f_m^11
 
             #----- U1
 
@@ -229,9 +233,15 @@ function FAST_field_grid(grid_size::String,y1::Array{Float64},y2::Array{Float64}
             tr_21 = sigma2[1,1]*Z1_11+sigma2[1,2]*Z1_21 + sigma2[2,1]*Z1_12+sigma2[2,2]*Z1_22
             tr_31 = sigma3[1,1]*Z1_11+sigma3[1,2]*Z1_21 + sigma3[2,1]*Z1_12+sigma3[2,2]*Z1_22
 
-            dirs1_param_1 = 0.; 
-            dirs1_param_2 = 0.5*tr_11; dirs1_param_3 = 0.5*tr_21; dirs1_param_4 = 0.5*tr_31
-            phi1_1 = cos_f_m+dirs1_param_1; phi1_2 = sin_f_m*(1/ar_m)*dirs1_param_2; phi1_3 = sin_f_m*(1/ar_m)*dirs1_param_3; phi1_4 = sin_f_m*(1/ar_m)*dirs1_param_4
+            dirs1_param_1 = 0.5*(Z1_11+Z1_22); 
+            dirs1_param_2 = 0.5*tr_11; 
+            dirs1_param_3 = 0.5*tr_21; 
+            dirs1_param_4 = 0.5*tr_31
+
+            phi1_1 = cos_f_m + dirs1_param_1; 
+            phi1_2 = sin_f_m*(1/ar_m)*dirs1_param_2; 
+            phi1_3 = sin_f_m*(1/ar_m)*dirs1_param_3; 
+            phi1_4 = sin_f_m*(1/ar_m)*dirs1_param_4
             #phi1_1r = phi1_1; phi1_2r = real(phi1_2); phi1_3r = real(phi1_3); phi1_4r = real(phi1_4)
             #phi1_1i = 0; phi1_2i = imag(phi1_2); phi1_3i = imag(phi1_3); phi1_4i = imag(phi1_4)
 
@@ -247,17 +257,24 @@ function FAST_field_grid(grid_size::String,y1::Array{Float64},y2::Array{Float64}
             tr_22 = sigma2[1,1]*Z2_11+sigma2[1,2]*Z2_21 + sigma2[2,1]*Z2_12+sigma2[2,2]*Z2_22
             tr_32 = sigma3[1,1]*Z2_11+sigma3[1,2]*Z2_21 + sigma3[2,1]*Z2_12+sigma3[2,2]*Z2_22
 
-            dirs2_param_1 = 0.; dirs2_param_2 = 0.5*tr_12; dirs2_param_3 = 0.5*tr_22; dirs2_param_4 = 0.5*tr_32
-            phi2_1 = cos_f_p+dirs2_param_1; phi2_2 = sin_f_p*(1/ar_p)*dirs2_param_2; phi2_3 = sin_f_p*(1/ar_p)*dirs2_param_3; phi2_4 = sin_f_p*(1/ar_p)*dirs2_param_4
+            dirs2_param_1 = 0.5*(Z2_11+Z2_22); 
+            dirs2_param_2 = 0.5*tr_12; 
+            dirs2_param_3 = 0.5*tr_22; 
+            dirs2_param_4 = 0.5*tr_32
+            
+            phi2_1 = cos_f_p + dirs2_param_1; 
+            phi2_2 = sin_f_p*(1/ar_p)*dirs2_param_2; 
+            phi2_3 = sin_f_p*(1/ar_p)*dirs2_param_3; 
+            phi2_4 = sin_f_p*(1/ar_p)*dirs2_param_4
             #phi2_1r = phi1_1; phi2_2r = real(phi2_2); phi2_3r = real(phi2_3); phi2_4r = real(phi2_4)
             #phi2_1i = 0; phi2_2i = imag(phi2_2); phi2_3i = imag(phi2_3); phi2_4i = imag(phi2_4)
 
             #----- symmetrized product field
 
-            U_1 = phi1_1*phi2_1 - phi1_2*phi2_2 - phi1_3*phi2_3 - phi1_4*phi2_4
-            U_2 = phi1_1*phi2_2 + phi1_2*phi2_1
-            U_3 = phi1_1*phi2_3 + phi1_3*phi2_1
-            U_4 = phi1_1*phi2_4 + phi1_4*phi2_1
+            U_1 = real(phi1_1*phi2_1 - phi1_2*phi2_2 - phi1_3*phi2_3 - phi1_4*phi2_4)
+            U_2 = real(phi1_1*phi2_2 + phi1_2*phi2_1)
+            U_3 = real(phi1_1*phi2_3 + phi1_3*phi2_1)
+            U_4 = real(phi1_1*phi2_4 + phi1_4*phi2_1)
 
             #U_1r = phi1_1*phi2_1 - (phi1_2r*phi2_2r - phi1_2i*phi2_2i) - (phi1_3r*phi2_3r - phi1_3i*phi2_3i) - (phi1_4r*phi2_4r - phi1_4i*phi2_4i)
             #U_1i = -(phi1_2i*phi2_2r + phi1_2r*phi2_2i) - (phi1_3i*phi2_3r + phi1_3r*phi2_3i) - (phi1_4i*phi2_4r + phi1_4r*phi2_4i)
@@ -270,12 +287,13 @@ function FAST_field_grid(grid_size::String,y1::Array{Float64},y2::Array{Float64}
 
             #----- normalization
 
-            C0 = U_1^2; Ck = U_2^2 + U_3^2 + U_4^2
-            N = real(sqrt(C0 + Ck))
+            C0 = U_1^2
+            Ck = U_2^2 + U_3^2 + U_4^2
+            N = sqrt(C0 + Ck)
 
             #----- return
 
-            U_vals[i,j,k,1] = (1/N)*real(U_1); U_vals[i,j,k,2] = (1/N)*real(U_2); U_vals[i,j,k,3] = (1/N)*real(U_3); U_vals[i,j,k,4] = (1/N)*real(U_4)
+            U_vals[i,j,k,1] = (1/N)*U_1; U_vals[i,j,k,2] = (1/N)*U_2; U_vals[i,j,k,3] = (1/N)*U_3; U_vals[i,j,k,4] = (1/N)*U_4
         
         end
     end
