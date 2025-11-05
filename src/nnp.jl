@@ -15,6 +15,7 @@ export make_grid
 
 include("interp.jl")
 export interp_2sky_no
+export interp_2sky_dx
 
 include("prod.jl")
 export field_value
@@ -26,6 +27,7 @@ export FAST_make_field
 
 include("deriv.jl")
 export deriv_y
+export deriv_x
 
 include("misc.jl")
 export b_dens
