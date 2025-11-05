@@ -1,6 +1,6 @@
-using nnp
+using NNP
 using Test
 
-@testset "nnp.jl" begin
+@testset "NNP.jl" begin
     # Write your tests here.
 end

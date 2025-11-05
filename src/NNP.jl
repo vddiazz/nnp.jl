@@ -1,4 +1,4 @@
-module nnp
+module NNP
 
 using JLD2
 using LinearAlgebra
