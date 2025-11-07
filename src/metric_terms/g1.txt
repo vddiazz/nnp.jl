@@ -1,0 +1,1 @@
+DA[i,j,k,1] * DB[i,j,k,1] + DA[i,j,k,2] * DB[i,j,k,2] + DA[i,j,k,3] * DB[i,j,k,3] + DA[i,j,k,4] * DB[i,j,k,4]

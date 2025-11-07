@@ -1,6 +1,7 @@
 #----- pkg
 
 using LinearAlgebra
+using Serialization
 using JLD2
 using NPZ
 
@@ -8,7 +9,7 @@ using NPZ
 
 function make_r(out::String,output_format::String)
 
-    if (output_format != "jld2") && (output_format != "npy")
+    if (output_format != "jld2") && (output_format != "npy") && (output_format != "jls")
         println("invalid output data type")
         return
     end
@@ -25,6 +26,11 @@ function make_r(out::String,output_format::String)
 
     elseif output_format == "npy"
         npzwrite(out*"/r_vals.npy", r_vals)
+
+    elseif output_format == "jls"
+        open(out*"/r_vals.jls", "w") do io
+            serialize(io, r_vals)
+        end
     end
 
     println()
@@ -68,6 +74,11 @@ function make_Q(out::String,output_format::String)
 
 function make_grid(type_of_grid::String, l1::Int64,l2::Int64,l3::Int64,step::Float64, out::String,output_format::String)
 
+    if (output_format != "jld2") && (output_format != "npy") && (output_format != "jls")
+        println("invalid output data type")
+        return
+    end
+    
     yt1 = collect(-l1/2:step:l1/2)
     yt2 = collect(-l2/2:step:l2/2)
     yt3 = collect(-l3/2:step:l3/2)
@@ -99,7 +110,16 @@ function make_grid(type_of_grid::String, l1::Int64,l2::Int64,l3::Int64,step::Flo
         npzwrite(out*"/$(type_of_grid)_$(l1)x$(l2)x$(l3)/y1.npy", y1)
         npzwrite(out*"/$(type_of_grid)_$(l1)x$(l2)x$(l3)/y2.npy", y2)
         npzwrite(out*"/$(type_of_grid)_$(l1)x$(l2)x$(l3)/y3.npy", y3)
-
+    elseif output_format == "jls"
+        open(out*"/y1.jls", "w") do io
+            serialize(io, y1)
+        end
+        open(out*"/y2.jls", "w") do io
+            serialize(io, y2)
+        end
+        open(out*"/y3.jls", "w") do io
+            serialize(io, y3)
+        end
     end
 
     println()

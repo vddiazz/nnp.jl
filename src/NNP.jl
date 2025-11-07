@@ -1,5 +1,6 @@
 module NNP
 
+using Serialization
 using JLD2
 using LinearAlgebra
 using NPZ
@@ -28,6 +29,23 @@ export FAST_make_field
 include("deriv.jl")
 export deriv_y
 export deriv_x
+export deriv_Q1
+export deriv_Q2
+
+#-----
+
+include("metric.jl")
+export g_AB
+
+include("g1.jl"); export term_g1
+include("g2.jl"); export term_g2
+include("g3.jl"); export term_g3
+include("g4.jl"); export term_g4
+include("g5.jl"); export term_g5
+include("g6.jl"); export term_g6
+include("g7.jl"); export term_g7
+
+#-----
 
 include("misc.jl")
 export b_dens

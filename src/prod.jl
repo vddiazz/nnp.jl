@@ -1,5 +1,6 @@
 #----- pkg
 
+using Serialization
 using JLD2
 using NPZ
 using LinearAlgebra
@@ -194,9 +195,9 @@ function FAST_field_grid(grid_size::String,y1::Array{Float64},y2::Array{Float64}
     
     U_vals = zeros(Float64, length(y1),length(y2),length(y3),4)
 
-    println()
-    println("2-skyrmion field -- Symmetrized product approximation")
-    println()
+    #println()
+    #println("2-skyrmion field -- Symmetrized product approximation")
+    #println()
 
     @showprogress 1 "Computing..." for k in 1:length(y3)
         @inbounds @fastmath for j in 1:length(y2), i in 1:length(y1)
@@ -242,8 +243,6 @@ function FAST_field_grid(grid_size::String,y1::Array{Float64},y2::Array{Float64}
             phi1_2 = sin_f_m*(1/ar_m)*dirs1_param_2; 
             phi1_3 = sin_f_m*(1/ar_m)*dirs1_param_3; 
             phi1_4 = sin_f_m*(1/ar_m)*dirs1_param_4
-            #phi1_1r = phi1_1; phi1_2r = real(phi1_2); phi1_3r = real(phi1_3); phi1_4r = real(phi1_4)
-            #phi1_1i = 0; phi1_2i = imag(phi1_2); phi1_3i = imag(phi1_3); phi1_4i = imag(phi1_4)
 
             #----- U2
 
@@ -266,8 +265,6 @@ function FAST_field_grid(grid_size::String,y1::Array{Float64},y2::Array{Float64}
             phi2_2 = sin_f_p*(1/ar_p)*dirs2_param_2; 
             phi2_3 = sin_f_p*(1/ar_p)*dirs2_param_3; 
             phi2_4 = sin_f_p*(1/ar_p)*dirs2_param_4
-            #phi2_1r = phi1_1; phi2_2r = real(phi2_2); phi2_3r = real(phi2_3); phi2_4r = real(phi2_4)
-            #phi2_1i = 0; phi2_2i = imag(phi2_2); phi2_3i = imag(phi2_3); phi2_4i = imag(phi2_4)
 
             #----- symmetrized product field
 
@@ -275,15 +272,6 @@ function FAST_field_grid(grid_size::String,y1::Array{Float64},y2::Array{Float64}
             U_2 = real(phi1_1*phi2_2 + phi1_2*phi2_1)
             U_3 = real(phi1_1*phi2_3 + phi1_3*phi2_1)
             U_4 = real(phi1_1*phi2_4 + phi1_4*phi2_1)
-
-            #U_1r = phi1_1*phi2_1 - (phi1_2r*phi2_2r - phi1_2i*phi2_2i) - (phi1_3r*phi2_3r - phi1_3i*phi2_3i) - (phi1_4r*phi2_4r - phi1_4i*phi2_4i)
-            #U_1i = -(phi1_2i*phi2_2r + phi1_2r*phi2_2i) - (phi1_3i*phi2_3r + phi1_3r*phi2_3i) - (phi1_4i*phi2_4r + phi1_4r*phi2_4i)
-            #U_2r = (phi1_1r*phi2_2r - phi1_1i*phi2_2i) + (phi1_2r*phi2_1r - phi1_2i*phi2_1i)
-            #U_2i = 
-            #U_3r = (phi1_1r*phi2_3r - phi1_1i*phi2_3i) + (phi1_3r*phi2_1r - phi1_3i*phi2_1i)
-            #U_3i = 
-            #U_4r = (phi1_1r*phi2_4r - phi1_1i*phi2_4i) + (phi1_4r*phi2_1r - phi1_4i*phi2_1i)
-            #U_4i = 
 
             #----- normalization
 
@@ -303,9 +291,9 @@ end
 
 ###
 
-function FAST_make_field(grid_size::String,y1::Array{Float64},y2::Array{Float64},y3::Array{Float64},f_minus_all::Array{Float64},f_plus_all::Array{Float64}, r_vals::Array{Float64}, Q_vals::Array{ComplexF64}, model::String)
+function FAST_make_field(grid_size::String,y1::Array{Float64},y2::Array{Float64},y3::Array{Float64},f_minus_all::Array{Float64},f_plus_all::Array{Float64}, r_vals::Array{Float64}, Q_vals::Array{ComplexF64}, model::String,out::String,output_format::String)
 
-    if (output_format != "jld2") && (output_format != "npy")
+    if (output_format != "jld2") && (output_format != "npy") && (output_format != "jls")
         println("invalid output data type")
     end
 
@@ -320,28 +308,37 @@ function FAST_make_field(grid_size::String,y1::Array{Float64},y2::Array{Float64}
     println("2-skyrmion field")
     println()
 
-    #----- main loop # PENDING
+    #----- main loop
 
-    for Q_idx in 1:length(Q_vals)
-        for r_idx in 1:length(r_vals)
-            
-            field_grid(r_vals[r_idx], rtc, r_idx, IdM, Q_vals[Q_idx,:,:], model)
-            
+    @showprogress 1 "Computing..." for Q_idx in 1:length(Q_vals)
+        @inbounds @fastmath for r_idx in 1:length(r_vals)
+
             println()
-            println("\rdone: r=$(r_idx), Q=$(Q_idx)")
+            prinjtln("r_idx = $(r_idx), Q_idx = $(Q_idx)")
             println()
 
-    #----- data saving
+            f_minus = f_minus_all[r_idx]
+            f_plus = f_plus_all[r_idx]
+            
+            FAST_field_grid(grid_size::String,y1::Array{Float64},y2::Array{Float64},y3::Array{Float64},f_minus::Array{Float64},f_plus::Array{Float64}, r_val::Float64,Q1::Matrix{ComplexF64}, Q2::Matrix{ComplexF64}, model::String)
+            
+        #----- data saving
 
-        if output_format == "jld2"
-            path = out*"/U_sym_r=$(r_idx)_Q=$(Q_idx).jld2"
-            @save path U_vals
+            if output_format == "jld2"
+                path = out*"/U_sym_r=$(r_idx)_Q=$(Q_idx).jld2"
+                @save path U_vals
 
-        elseif output_format == "npy"
-            npzwrite(out*"/U_sym_r=$(r_idx)_Q=$(Q_idx).npy", U_vals)
+            elseif output_format == "npy"
+                npzwrite(out*"/U_sym_r=$(r_idx)_Q=$(Q_idx).npy", U_vals)
+        
+            elseif output_format == "jls"
+                open(out*"/U_sym_r=$(r_idx)_Q=$(Q_idx).jls", "w") do io
+                    serialize(io, U_vals)
+                end
+        
+            end
         end
-
-        end
+    
     end
 
     println()
@@ -350,4 +347,3 @@ function FAST_make_field(grid_size::String,y1::Array{Float64},y2::Array{Float64}
     println("#--------------------------------------------------#")
 
 end
-

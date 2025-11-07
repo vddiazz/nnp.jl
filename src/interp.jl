@@ -1,5 +1,6 @@
 #----- pkg
 
+using Serialization
 using JLD2
 using NPZ
 using LinearAlgebra
@@ -55,6 +56,13 @@ function interp_2sky_no(rtc,r_vals::Array{Float64}, model::String,data, out::Str
             @save path1 matrix_f_plus; @save path2 matrix_f_minus
         elseif output_format == "npy"
             npzwrite(out*"/f_$(model)_plus_r=$(r_idx).npy", matrix_f_plus); npzwrite(out*"/f_$(model)_minus_r=$(r_idx).npy", matrix_f_minus)
+        elseif output_format == "jls"
+            open(out*"/f_$(model)_plus_r=$(r_idx).jls", "w") do io
+                serialize(io, matrix_f_plus)
+            end
+            open(out*"/f_$(model)_minus_r=$(r_idx).jls", "w") do io
+                serialize(io, matrix_f_minus)
+            end
         end
 
     end
@@ -132,6 +140,20 @@ function interp_2sky_dx(rtc,r_vals, model::String,deriv::String,hD::Float64, out
         elseif output_format == "npy"
             npzwrite(out*"/f_$(model)_$(deriv)_plus_p_r=$(r_idx).npy", matrix_f_plus_p); npzwrite(out*"/f_$(model)_$(deriv)_plus_m_r=$(r_idx).npy", matrix_f_plus_m)
             npzwrite(out*"/f_$(model)_$(deriv)_minus_p_r=$(r_idx).npy", matrix_f_minus_p); npzwrite(out*"/f_$(model)_$(deriv)_minus_m_r=$(r_idx).npy", matrix_f_minus_m)
+         elseif output_format == "jls"
+            open(out*"/f_$(model)_$(deriv)_plus_p_r=$(r_idx).jls", "w") do io
+                serialize(io, matrix_f_plus_p)
+            end
+            open(out*"/f_$(model)_$(deriv)_plus_m_r=$(r_idx).jls", "w") do io
+                serialize(io, matrix_f_plus_m)
+            end
+            open(out*"/f_$(model)_$(deriv)_minus_p_r=$(r_idx).jls", "w") do io
+                serialize(io, matrix_f_minus_p)
+            end
+            open(out*"/f_$(model)_$(deriv)_minus_m_r=$(r_idx).jls", "w") do io
+                serialize(io, matrix_f_minus_m)
+            end
+
         end
     end
     
