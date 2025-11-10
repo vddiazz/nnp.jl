@@ -13,9 +13,9 @@ function g_AB(A::Int64,B::Int64,c6::Float64,r_idx::Int64,Q_idx::Int64,grid_size:
 
     #----- prepare fields
 
-    d1 = npzread("/home/velni/phd/w/nnp/data/deriv/$(model)/$(grid_size)/d1U_r=$(r_idx)_Q=$(Q_idx).npy")
-    d2 = npzread("/home/velni/phd/w/nnp/data/deriv/$(model)/$(grid_size)/d2U_r=$(r_idx)_Q=$(Q_idx).npy")
-    d3 = npzread("/home/velni/phd/w/nnp/data/deriv/$(model)/$(grid_size)/d3U_r=$(r_idx)_Q=$(Q_idx).npy")
+    d1 = open("/home/velni/phd/w/nnp/data/deriv/$(model)/$(grid_size)/d1U_r=$(r_idx)_Q=$(Q_idx).jls", "r") do io; deserialize(io); end
+    d2 = open("/home/velni/phd/w/nnp/data/deriv/$(model)/$(grid_size)/d2U_r=$(r_idx)_Q=$(Q_idx).jls", "r") do io; deserialize(io); end
+    d3 = open("/home/velni/phd/w/nnp/data/deriv/$(model)/$(grid_size)/d3U_r=$(r_idx)_Q=$(Q_idx).jls", "r") do io; deserialize(io); end
 
     l1 = length(d1[:,1,1,1]); l2 = length(d1[1,:,1,1]); l3 = length(d1[1,1,:,1])
 
@@ -27,8 +27,8 @@ function g_AB(A::Int64,B::Int64,c6::Float64,r_idx::Int64,Q_idx::Int64,grid_size:
     println("Metric (A=$(A), B=$(B)) --- r_idx=$(r_idx), Q_idx=$(Q_idx)")
     println()
  
-    DA = npzread("/home/velni/phd/w/nnp/data/deriv/$(model)/$(grid_size)/D$(A)U_r=$(r_idx)_Q=$(Q_idx).npy")
-    DB = npzread("/home/velni/phd/w/nnp/data/deriv/$(model)/$(grid_size)/D$(B)U_r=$(r_idx)_Q=$(Q_idx).npy")
+    DA = open("/home/velni/phd/w/nnp/data/deriv/$(model)/$(grid_size)/D$(A)U_r=$(r_idx)_Q=$(Q_idx).jls", "r") do io; deserialize(io); end
+    DB = open("/home/velni/phd/w/nnp/data/deriv/$(model)/$(grid_size)/D$(B)U_r=$(r_idx)_Q=$(Q_idx).jls", "r") do io; deserialize(io); end
 
     g = 0.
 

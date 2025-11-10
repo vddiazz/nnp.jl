@@ -47,6 +47,16 @@ include("g7.jl"); export term_g7
 
 #-----
 
+include("pot.jl")
+export pot
+
+include("v1.jl"); export term_v1
+include("v2.jl"); export term_v2
+include("v3.jl"); export term_v3
+include("v6.jl"); export term_v6
+
+#-----
+
 include("misc.jl")
 export b_dens
 

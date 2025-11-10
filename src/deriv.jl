@@ -20,7 +20,7 @@ function deriv_y(dir::String,grid_size::String,hD::Float64,r_idx::Int,Q_idx::Int
 
     if input_format == "npy"
         field = npzread("/home/velni/phd/w/nnp/data/prod/$(model)/$(grid_size)/U_sym_r=$(r_idx)_Q=$(Q_idx).npy") # KICK OUTSIDE OF FUNCTION
-    elseif innput_format == "jls"
+    elseif input_format == "jls"
         field = open("/home/velni/phd/w/nnp/data/prod/$(model)/$(grid_size)/U_sym_r=$(r_idx)_Q=$(Q_idx).jls", "r") do io; deserialize(io); end
     end
     @assert eltype(field) == Float64
@@ -103,7 +103,7 @@ function deriv_y(dir::String,grid_size::String,hD::Float64,r_idx::Int,Q_idx::Int
     elseif output_format == "npy"
         npzwrite(out*"/d$(dir)U_r=$(r_idx)_Q=$(Q_idx).npy", d_vals)
     elseif output_format == "jls"
-        open(out*"d$(dir)U_r=$(r_idx)_Q=$(Q_idx).jls", "w") do io
+        open(out*"/d$(dir)U_r=$(r_idx)_Q=$(Q_idx).jls", "w") do io
             serialize(io, d_vals)
         end
     end
@@ -341,7 +341,7 @@ end
 
 ###
 
-function deriv_Q1(dir::Int64,grid_size::String,hD::Float64,y1::Array{Float64},y2::Array{Float64},y3::Array{Float64},f_minus::Array{Float64},f_plus::Array{Float64},r_val::Float64,Q1p::Matrix{ComplexF64}, Q2::Matrix{ComplexF64}, model::String)
+function deriv_Q1(dir::Int64,grid_size::String,hD::Float64,y1::Array{Float64},y2::Array{Float64},y3::Array{Float64},f_minus::Array{Float64},f_plus::Array{Float64},r_val::Float64,Q1::Matrix{ComplexF64}, Q2::Matrix{ComplexF64}, model::String)
 
     #----- prepare params
 
