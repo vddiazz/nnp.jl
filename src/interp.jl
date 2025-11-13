@@ -17,12 +17,23 @@ function interp_2sky_no(rtc,r_vals::Array{Float64}, model::String,data, out::Str
     r0 = data[:,1]; f0 = data[:,2]
 
     y1 = rtc[1]; y2 = rtc[2]; y3 = rtc[3]
-    l1 = length(y1); l2 = length(y2); l3 = length(y3)
+    l1 = length(y1); l2 = length(y2); l3 = size(y3,ndims(y3))
 
     #----- main loop
     
     r0_itp = first(r0):0.01:last(r0)
-    itp = extrapolate(scale(interpolate(f0,BSpline(Linear())), r0_itp), Line())
+
+    itp_inner = interpolate(f0, BSpline(Linear()))
+    itp_scaled = scale(itp_inner, r0_itp)
+    function itp(x)
+        if x < first(r0)
+            return 3.14159
+        elseif x > last(r0)
+            return 0
+        else
+            return itp_scaled(x)
+        end
+    end
 
     println()
     println("#--------------------------------------------------#")
@@ -37,11 +48,11 @@ function interp_2sky_no(rtc,r_vals::Array{Float64}, model::String,data, out::Str
 
         r = r_vals[r_idx]
         
-        @showprogress 1 "Computing r=$(r_idx):" for k in 1:length(y3)
-            @inbounds @fastmath for j in 1:length(y2)
-                for i in 1:length(y1)
-                    temp_f_plus = itp(norm([y1[i],y2[j],y3[k]] .+ [0.,0.,r/2]) ) 
-                    temp_f_minus = itp(norm([y1[i],y2[j],y3[k]] .- [0.,0.,r/2]) )
+        @showprogress 1 "Computing r=$(r_idx):" for k in 1:l3
+            @inbounds @fastmath for j in 1:l2
+                for i in 1:l1
+                    temp_f_plus = itp(norm([y1[i],y2[j],y3[r_idx,k]] .+ [0.,0.,r/2]) ) 
+                    temp_f_minus = itp(norm([y1[i],y2[j],y3[r_idx,k]] .- [0.,0.,r/2]) )
             
                     matrix_f_plus[i,j,k] = temp_f_plus
                     matrix_f_minus[i,j,k] = temp_f_minus
@@ -81,12 +92,23 @@ function interp_2sky_dx(rtc,r_vals, model::String,deriv::String,hD::Float64, out
     r0 = data[:,1]; f0 = data[:,2]
 
     y1 = rtc[1]; y2 = rtc[2]; y3 = rtc[3]
-    l1 = length(y1); l2 = length(y2); l3 = length(y3)
+    l1 = length(y1); l2 = length(y2); l3 = size(y3,ndims(y3))
 
     #----- main loop
-    
+
     r0_itp = first(r0):0.01:last(r0)
-    itp = extrapolate(scale(interpolate(f0,BSpline(Linear())), r0_itp), Line())
+
+    itp_inner = interpolate(f0, BSpline(Linear()))
+    itp_scaled = scale(itp_inner, r0_itp)
+    function itp(x)
+        if x < 0
+            return 3.14159
+        elseif x > 15
+            return 0
+        else
+            return itp_scaled(x)
+        end
+    end    
 
     println()
     println("#--------------------------------------------------#")
@@ -111,13 +133,13 @@ function interp_2sky_dx(rtc,r_vals, model::String,deriv::String,hD::Float64, out
             x_p = [0.,0.,hD+r]./2; x_m = [0.,0.,-hD+r]./2
         end
 
-        @showprogress 1 "Computing r=$(r_idx):" for k in 1:length(y3)
-            @inbounds @fastmath for j in 1:length(y2)
-                for i in 1:length(y1)
-                    temp_f_plus_p = itp(norm([y1[i],y2[j],y3[k]] .+ x_p) )
-                    temp_f_plus_m = itp(norm([y1[i],y2[j],y3[k]] .+ x_m) )
-                    temp_f_minus_p = itp(norm([y1[i],y2[j],y3[k]] .- x_p) )
-                    temp_f_minus_m = itp(norm([y1[i],y2[j],y3[k]] .- x_m) )
+        @showprogress 1 "Computing r=$(r_idx):" for k in 1:l3
+            @inbounds @fastmath for j in 1:l2
+                for i in 1:l1
+                    temp_f_plus_p = itp(norm([y1[i],y2[j],y3[r_idx,k]] .+ x_p) )
+                    temp_f_plus_m = itp(norm([y1[i],y2[j],y3[r_idx,k]] .+ x_m) )
+                    temp_f_minus_p = itp(norm([y1[i],y2[j],y3[r_idx,k]] .- x_p) )
+                    temp_f_minus_m = itp(norm([y1[i],y2[j],y3[r_idx,k]] .- x_m) )
 
                     matrix_f_plus_p[i,j,k] = temp_f_plus_p
                     matrix_f_plus_m[i,j,k] = temp_f_plus_m

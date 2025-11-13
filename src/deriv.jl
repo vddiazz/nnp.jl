@@ -10,7 +10,7 @@ using LoopVectorization
 
 #####
 
-function deriv_y(dir::String,grid_size::String,hD::Float64,r_idx::Int,Q_idx::Int, model::String, input_format::String,out::String,output_format::String)
+function deriv_y(dir::String,grid_size::String,r_idx::Int,Q_idx::Int, model::String, input_format::String,out::String,output_format::String)
 
     if (output_format != "jld2") && (output_format != "npy") && (output_format != "jls")
        println("invalid output data type")
@@ -21,6 +21,9 @@ function deriv_y(dir::String,grid_size::String,hD::Float64,r_idx::Int,Q_idx::Int
     if input_format == "npy"
         field = npzread("/home/velni/phd/w/nnp/data/prod/$(model)/$(grid_size)/U_sym_r=$(r_idx)_Q=$(Q_idx).npy") # KICK OUTSIDE OF FUNCTION
     elseif input_format == "jls"
+        y1 = open("/home/velni/phd/w/nnp/data/sample/$(grid_size)/y1.jls", "r") do io; deserialize(io); end
+        y2 = open("/home/velni/phd/w/nnp/data/sample/$(grid_size)/y2.jls", "r") do io; deserialize(io); end
+        y3 = (open("/home/velni/phd/w/nnp/data/sample/$(grid_size)/y3.jls", "r") do io; deserialize(io); end)[r_idx,:]
         field = open("/home/velni/phd/w/nnp/data/prod/$(model)/$(grid_size)/U_sym_r=$(r_idx)_Q=$(Q_idx).jls", "r") do io; deserialize(io); end
     end
     @assert eltype(field) == Float64
@@ -32,11 +35,12 @@ function deriv_y(dir::String,grid_size::String,hD::Float64,r_idx::Int,Q_idx::Int
     @assert eltype(field) == Float64
     d_vals :: Array{Float64}
 
+    hD = y1[2]-y1[1] # INTRODUCE IN "reg" LOOP
     step = 12*hD
 
     #----- main loops
 
-    if dir == "1"
+    if dir == "1" && startswith(grid_size, "reg")
 
         println()
         println("#--------------------------------------------------#")
@@ -55,7 +59,7 @@ function deriv_y(dir::String,grid_size::String,hD::Float64,r_idx::Int,Q_idx::Int
             end
         end
 
-    elseif dir == "2"
+    elseif dir == "2" && startswith(grid_size, "reg")
 
         println()
         println("#--------------------------------------------------#")
@@ -74,7 +78,7 @@ function deriv_y(dir::String,grid_size::String,hD::Float64,r_idx::Int,Q_idx::Int
             end
         end
     
-    elseif dir == "3"
+    elseif dir == "3" && startswith(grid_size, "reg")
 
         println()
         println("#--------------------------------------------------#")
@@ -93,7 +97,65 @@ function deriv_y(dir::String,grid_size::String,hD::Float64,r_idx::Int,Q_idx::Int
             end
         end
     end
- 
+
+    #----- proy loop
+
+    if dir == "1" && startswith(grid_size, "proy")
+
+        println()
+        println("#--------------------------------------------------#")
+        println()
+        println("Derivative in y1 direction")
+        println()
+
+        @showprogress 1 "Computing..." for k in 3:l3-2
+            @inbounds @fastmath for j in 3:l2-2, i in 3:l1-2, c in 1:4
+                hp1 = abs(y1[i+1]-y1[i]); hp2 = abs(y1[i+2]-y1[i])
+                hm1 = abs(y1[i-1]-y1[i]); hm2 = abs(y1[i-2]-y1[i])
+                
+                hvals = [hm2, hm1, hp1, hp2]
+
+                VM = [hvals.^0 hvals.^1 hvals.^2 hvals.^3]
+                rhs = [0, 1, 0, 0]
+                w = VM \ rhs
+
+                p1 = field[i+1,j,k,c]
+                p2 = field[i+2,j,k,c]
+                m1 = field[i-1,j,k,c]
+                m2 = field[i-2,j,k,c]
+
+                d_vals[i,j,k,c] = dot(w,[p2,p1,m1,m2])
+            end
+        end
+
+    elseif dir == "2" && startswith(grid_size, "reg")
+
+        println()
+        println("#--------------------------------------------------#")
+        println()
+        println("Derivative in y2 direction")
+        println()
+
+        @showprogress 1 "Computing..." for k in 3:l3-2
+            @tturbo for j in 3:l2-2, i in 3:l1-2, c in 1:4
+            end
+        end
+    
+    elseif dir == "3" && startswith(grid_size, "reg")
+
+        println()
+        println("#--------------------------------------------------#")
+        println()
+        println("Derivative in y3 direction")
+        println()
+        
+        @showprogress 1 "Computing..." for k in 3:l3-2
+            @tturbo for j in 3:l2-2, i in 3:l1-2, c in 1:4
+            end
+        end
+    end
+
+
     #----- data saving
 
     if output_format == "jld2"

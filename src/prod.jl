@@ -185,6 +185,8 @@ function FAST_field_grid(grid_size::String,y1::Array{Float64},y2::Array{Float64}
 
     #----- prelocate arrays
 
+    l1 = length(y1); l2 = length(y2); l3 = length(y3)
+
     y = zeros(Float64, 3)
     xm = zeros(Float64, 3)
 
@@ -193,14 +195,14 @@ function FAST_field_grid(grid_size::String,y1::Array{Float64},y2::Array{Float64}
 
     #----- evaluate field values
     
-    U_vals = zeros(Float64, length(y1),length(y2),length(y3),4)
+    U_vals = zeros(Float64, l1,l2,l3,4)
 
     #println()
     #println("2-skyrmion field -- Symmetrized product approximation")
     #println()
 
-    @showprogress 1 "Computing..." for k in 1:length(y3)
-        @inbounds @fastmath for j in 1:length(y2), i in 1:length(y1)
+    @showprogress 1 "Computing..." for k in 1:l3
+        @inbounds @fastmath for j in 1:l2, i in 1:l1
                
             #----- params        
 

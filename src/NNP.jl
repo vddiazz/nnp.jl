@@ -12,7 +12,8 @@ using LoopVectorization
 include("sample.jl")
 export make_r
 #export make_Q
-export make_grid
+export make_grid_reg
+export make_grid_proy
 
 include("interp.jl")
 export interp_2sky_no
